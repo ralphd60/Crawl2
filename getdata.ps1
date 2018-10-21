@@ -1,0 +1,1 @@
+Get-Content tmpaws.txt | % { $_.Split(' ')[-1];}
