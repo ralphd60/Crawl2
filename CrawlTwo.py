@@ -29,7 +29,6 @@ import urllib.request
 from ago import human
 from dateutil import parser
 from hurry.filesize import size
-#from scrapy.utils.log import configure_logging
 from warcio.archiveiterator import ArchiveIterator
 
 from newsplease import NewsPlease
@@ -40,14 +39,14 @@ __credits__ = ["Sebastian Nagel"]
 
 
 class CommonCrawl:
-    ############ YOUR CONFIG ############
+    # ########### YOUR CONFIG ############
     # download dir for warc files
     local_download_dir_warc = './cc_download_warc/'
     # download dir for articles
     local_download_dir_article = './cc_download_articles/'
     # hosts (if None or empty list, any host is OK)
-    filter_valid_hosts = ['foxbusiness.com', 'bloomberg.com','cnbc.com']  # example: ['elrancaguino.cl']
-    #filter_valid_hosts = []
+    filter_valid_hosts = ['foxbusiness.com', 'bloomberg.com', 'cnbc.com']  # example: ['elrancaguino.cl']
+    # filter_valid_hosts = []
 
     # filter on a word
     filter_text = input('Search keyword:  ')
@@ -55,9 +54,9 @@ class CommonCrawl:
     wait = input("PRESS ENTER TO CONTINUE")
 
     # start date (if None, any date is OK as start date), as datetime
-    filter_start_date = datetime.datetime(2017,8,1)
+    filter_start_date = datetime.datetime(2017, 8, 1)
     # end date (if None, any date is OK as end date)
-    filter_end_date = datetime.datetime(2017,10,30)
+    filter_end_date = datetime.datetime(2017, 10, 30)
     # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
     filter_strict_date = True
     # if True, the script checks whether a file has been downloaded already and uses that file instead of downloading
@@ -65,14 +64,14 @@ class CommonCrawl:
     reuse_previously_downloaded_files = True
     # continue after error
     continue_after_error = False
-    ############ END YOUR CONFIG #########
+    # ########### END YOUR CONFIG #########
 
     # commoncrawl.org
     cc_base_url = 'https://commoncrawl.s3.amazonaws.com/'
     cc_news_crawl_names = None
 
     # logging
-    logging.basicConfig(filename='crawl.log', filemode='w',level=logging.DEBUG)
+    logging.basicConfig(filename='crawl.log', filemode='w', level=logging.DEBUG)
     logger = logging.getLogger(__name__)
 
     def __setup__(self):
@@ -87,8 +86,8 @@ class CommonCrawl:
 
         ####
         # Debug
-        #print(self.filter_text)
-        #wait = input("PRESS ENTER TO CONTINUE")
+        # print(self.filter_text)
+        # wait = input("PRESS ENTER TO CONTINUE")
 
         # make loggers quite
         logging.getLogger('requests').setLevel(logging.WARNING)
@@ -106,10 +105,8 @@ class CommonCrawl:
         # filter by host if list is populated - empty host lists makes the process etremely slow.
         # seems like it is caused by the date checks
 
-
         if self.filter_valid_hosts:
             url = warc_record.rec_headers.get_header('WARC-Target-URI')
-
             # very simple check, check if one of the required host names is contained in the url of the WARC transaction
             # better would be to extract the host name from the WARC transaction Target URI and then check for equality
             # because currently something like g.co?forward_url=facebook.com would yield a positive filter test for
@@ -125,7 +122,7 @@ class CommonCrawl:
                 if valid_host in url:
                     break
                 else:
-                    if valid_host not in url and c == x :
+                    if valid_host not in url and c == x:
                         return False, article
 
         # filter by date
@@ -135,28 +132,25 @@ class CommonCrawl:
 
             publishing_date = self.__get_publishing_date(warc_record, article)
 
-
             if not publishing_date:
                 if self.filter_strict_date:
-                     return False, article
-            else:  # here we for sure have a date
+                    return False, article
+            else:
+                # here we for sure have a date
                 # is article published too early?
-
                 if self.filter_start_date:
                     if publishing_date < self.filter_start_date:
                         return False, article
                 if self.filter_end_date < publishing_date:
                         return False, article
 
-        get_desc_data = self.__get_description_data(warc_record,article)
-
+        get_desc_data = self.__get_description_data(warc_record, article)
 
         if not get_desc_data:
             return False, article
         else:
             if self.filter_text not in get_desc_data:
                 return False, article
-
 
         return True, article
 
@@ -198,28 +192,13 @@ class CommonCrawl:
         Gets the index of news crawl files from commoncrawl.org and returns an array of names
         :return:
         """
-        # cleanup  - changed this call to subprocess.call without shell as it is not neded
-        ## subprocess.call("rm tmpaws.txt")
 
-        # get the remote info
-        ####
-        # This was replaced with a split and a call to a file see *****
-        # cmd = "aws s3 ls --recursive s3://commoncrawl/crawl-data/CC-NEWS/ --no-sign-request > tmpaws.txt && " \
-        #      "Powershell  -Command \"Get-Content tmpaws.txt | % { $_.Split(' ')[-1];}\" && " \
-        #     "rm tmpaws.txt"
-        ####
-        #use the below for Linux as it has awk
-              #"awk '{ print $4 }' tmpaws.txt && " \
-              #"rm tmpaws.txt"
-        # ***** replaces the above.  Need to change for Linux
-        # ALSO, POWERSHELL CALL DOES NOT WORK IN IDE, Need to run from command line
         cmd1 = "aws s3 ls --recursive s3://commoncrawl/crawl-data/CC-NEWS/ --no-sign-request > tmpaws.txt"
-        #cmd2 = "Powershell -Command \"Get-Content tmpaws.txt | % { $_.Split(' ')[-1];}\""
+        # ALSO, POWERSHELL CALL DOES NOT WORK IN IDE, Need to run from command line
+        # cmd2 = "Powershell -Command \"Get-Content tmpaws.txt | % { $_.Split(' ')[-1];}\""
         cmd2 = ["powershell.exe", "C:\\Users\\ralphd-laptop2\\PycharmProjects\\Crawl2\\getdata.ps1"]
-
-        #self.logger.info('executing: %s', cmd)
-        #change this call to subprocess.getoutput to subprocess.call
-        #stdout_data = subprocess.getoutput(cmd)
+        # use the below for Linux as it has awk
+        # cmd2 = "awk '{ print $4 }' tmpaws.txt && " \
 
         self.logger.info('executing: %s', cmd1)
         subprocess.call(cmd1, shell=True)
@@ -227,11 +206,10 @@ class CommonCrawl:
         # this is the call that does not work in IDE.  Need to use Popen and then use PIPE and.communicate to put data
         # in variable object
         self.logger.info('executing: %s', cmd2)
-        out_data = subprocess.Popen(cmd2,shell=True,stdout=subprocess.PIPE)
+        out_data = subprocess.Popen(cmd2, shell=True, stdout=subprocess.PIPE)
         stdout_data = out_data.communicate()[0].decode('utf-8')
 
         lines = stdout_data.splitlines()
-
 
         return lines
 
@@ -285,12 +263,13 @@ class CommonCrawl:
         counter_article_discarded = 0
         start_time = time.time()
 
-        with open(path_name, 'rb') as stream: #opens a file and returns a stream 'rb' = read/binary
+        with open(path_name, 'rb') as stream:
+            # opens a file and returns a stream 'rb' = read/binary
             for record in ArchiveIterator(stream):
                 try:
-                    #Every WARC record shall have a type, reported in the WARC-Type field. There are eight WARC record
-                    #types: 'warcinfo', 'response', 'resource', 'request', 'metadata', 'revisit', 'conversion',
-                    #  and 'continuation'.
+                    # Every WARC record shall have a type, reported in the WARC-Type field. There are eight WARC record
+                    # types: 'warcinfo', 'response', 'resource', 'request', 'metadata', 'revisit', 'conversion',
+                    # and 'continuation'.
                     if record.rec_type == 'response':
                         counter_article_total += 1
 
@@ -322,9 +301,9 @@ class CommonCrawl:
                             secs_per_article = elapsed_secs / counter_article_total
                             self.logger.info('statistics')
                             self.logger.warning('pass = %i, discard = %i, total = %i', counter_article_passed,
-                                             counter_article_discarded, counter_article_total)
+                                counter_article_discarded, counter_article_total)
                             self.logger.warning('extraction from current WARC file started %s; %f s/article',
-                                             human(start_time), secs_per_article)
+                                human(start_time), secs_per_article)
                 except:
                     if self.continue_after_error:
                         self.logger.error('Unexpected error: %s', sys.exc_info()[0])
@@ -345,13 +324,14 @@ class CommonCrawl:
 
         self.logger.info('found %i files at commoncrawl.org', len(self.cc_news_crawl_names))
 
-        # iterate the list of crawl_names, that was retrieved by the get_remote_index function which populated this cc_dews_crawl_names object.
+        # iterate the list of crawl_names, that was retrieved by the get_remote_index function which populated
+        # this cc_dews_crawl_names object.
         # And for each: download and process it
         for name in self.cc_news_crawl_names:
             download_url = self.__get_download_url(name)
             local_path_name = self.__download(download_url)
             self.__process_warc_gz_file(local_path_name)
-            #wait = input("PRESS ENTER TO CONTINUE going to next warc file")
+            # wait = input("PRESS ENTER TO CONTINUE going to next warc file")
 
     def __get_pretty_filepath(self, path, article):
         """
@@ -361,8 +341,8 @@ class CommonCrawl:
         :return:
         """
         short_filename = hashlib.sha256(article.filename.encode()).hexdigest()
-        #the below works but need to shorten the description as the file name becoes to long
-        #short_filename = article.description
+        # the below works but need to shorten the description as the file name becoes to long
+        # short_filename = article.description
 
 
         sub_dir = article.source_domain
@@ -390,8 +370,7 @@ class CommonCrawl:
 
 
 if __name__ == '__main__':
-
-    #here we are creating the object
+    # here we are creating the object
     common_crawl = CommonCrawl()
-    #here is where we run the function 'run' which starts the program
+    # here is where we run the function 'run' which starts the program
     common_crawl.run()
