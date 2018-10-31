@@ -45,7 +45,7 @@ class CommonCrawl:
     # download dir for articles
     local_download_dir_article = './cc_download_articles/'
     # hosts (if None or empty list, any host is OK)
-    filter_valid_hosts = ['foxbusiness.com', 'bloomberg.com', 'cnbc.com']  # example: ['elrancaguino.cl']
+    filter_valid_hosts = ['foxbusiness.com', 'bloomberg.com', 'cnbc.com', 'cnn.com']  # example: ['elrancaguino.cl']
     # filter_valid_hosts = []
 
     # filter on a word
@@ -56,14 +56,14 @@ class CommonCrawl:
     # start date (if None, any date is OK as start date), as datetime
     filter_start_date = datetime.datetime(2017, 8, 1)
     # end date (if None, any date is OK as end date)
-    filter_end_date = datetime.datetime(2017, 10, 30)
+    filter_end_date = datetime.datetime(2017, 8, 2)
     # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
     filter_strict_date = True
     # if True, the script checks whether a file has been downloaded already and uses that file instead of downloading
     # again. Note that there is no check whether the file has been downloaded completely or is valid!
     reuse_previously_downloaded_files = True
     # continue after error
-    continue_after_error = False
+    continue_after_error = True
     # ########### END YOUR CONFIG #########
 
     # commoncrawl.org
@@ -151,7 +151,6 @@ class CommonCrawl:
         else:
             if self.filter_text not in get_desc_data:
                 return False, article
-
         return True, article
 
     def __get_publishing_date(self, warc_record, article):
@@ -162,7 +161,8 @@ class CommonCrawl:
         """
 
         if article.date_publish:
-            return parser.parse(article.date_publish)
+            # changed the below to a string. was getting error leaving it as datetime
+            return parser.parse(str(article.date_publish))
         else:
             return None
 
@@ -282,15 +282,15 @@ class CommonCrawl:
 
                             if not article:
                                 article = NewsPlease.from_warc(record)
-                            self.logger.info('article pass (%s; %s; %s)', article.sourceDomain, article.publish_date,
-                            article.title)
+                            self.logger.info('article pass (%s; %s; %s)', article.source_domain, article.date_publish,
+                                             article.title)
                             self.on_valid_article_extracted(article)
                         else:
                             counter_article_discarded += 1
 
                             if article:
-                                self.logger.info('article discard (%s; %s; %s)', article.sourceDomain,
-                                                 article.publish_date,
+                                self.logger.info('article discard (%s; %s; %s)', article.source_domain,
+                                                 article.date_publish,
                                                  article.title)
                             else:
                                 self.logger.info('article discard (%s)',
@@ -325,13 +325,25 @@ class CommonCrawl:
         self.logger.info('found %i files at commoncrawl.org', len(self.cc_news_crawl_names))
 
         # iterate the list of crawl_names, that was retrieved by the get_remote_index function which populated
-        # this cc_dews_crawl_names object.
+        # this cc_news_crawl_names object.
         # And for each: download and process it
         for name in self.cc_news_crawl_names:
-            download_url = self.__get_download_url(name)
-            local_path_name = self.__download(download_url)
-            self.__process_warc_gz_file(local_path_name)
-            # wait = input("PRESS ENTER TO CONTINUE going to next warc file")
+            #  this will allow us to limit download data
+            y = int(name[35:39])
+            m = int(name[39:41])
+            d = int(name[41:43])
+            file_date = datetime.datetime(y,m,d)
+            print(file_date)
+
+            # filter_start_date = datetime.date(2016, 8, 26)
+            print(self.filter_start_date)
+
+            if file_date == self.filter_start_date:
+                wait = input("PRESS ENTER TO CONTINUE going to next warc file")
+                download_url = self.__get_download_url(name)
+                local_path_name = self.__download(download_url)
+                self.__process_warc_gz_file(local_path_name)
+
 
     def __get_pretty_filepath(self, path, article):
         """
@@ -370,7 +382,7 @@ class CommonCrawl:
 
 
 if __name__ == '__main__':
-    # here we are creating the object
+    # here we are creating the object (https://commoncrawl.org)
     common_crawl = CommonCrawl()
     # here is where we run the function 'run' which starts the program
     common_crawl.run()
