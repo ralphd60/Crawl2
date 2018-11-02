@@ -58,12 +58,12 @@ class CommonCrawl:
     # end date (if None, any date is OK as end date)
     filter_end_date = datetime.datetime(2017, 8, 2)
     # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
-    filter_strict_date = True
+    filter_strict_date = False
     # if True, the script checks whether a file has been downloaded already and uses that file instead of downloading
     # again. Note that there is no check whether the file has been downloaded completely or is valid!
     reuse_previously_downloaded_files = True
     # continue after error
-    continue_after_error = True
+    continue_after_error = False
     # ########### END YOUR CONFIG #########
 
     # commoncrawl.org
@@ -375,7 +375,8 @@ class CommonCrawl:
 
         # do whatever you need to do with the article (e.g., save it to disk, store it in ElasticSearch, etc.)
         with open(self.__get_pretty_filepath(self.local_download_dir_article, article), 'w') as outfile:
-            json.dump(article, outfile, indent=4, sort_keys=True)
+            #OLD CODE  json.dump(article, outfile, indent=4, sort_keys=True)
+            json.dump(article.__dict__, outfile, default=str, indent=4, sort_keys=True)
         # ...
 
         return
