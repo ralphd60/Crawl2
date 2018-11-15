@@ -91,11 +91,11 @@ class CommonCrawl:
         # wait = input("PRESS ENTER TO CONTINUE")
 
         # make loggers quite
-        # logging.getLogger('requests').setLevel(logging.WARNING)
-        # logging.getLogger('readability').setLevel(logging.WARNING)
-        # logging.getLogger('PIL').setLevel(logging.WARNING)
-        # logging.getLogger('newspaper').setLevel(logging.WARNING)
-        # logging.getLogger('newsplease').setLevel(logging.WARNING)
+        logging.getLogger('requests').setLevel(logging.WARNING)
+        logging.getLogger('readability').setLevel(logging.WARNING)
+        logging.getLogger('PIL').setLevel(logging.WARNING)
+        logging.getLogger('newspaper').setLevel(logging.WARNING)
+        logging.getLogger('newsplease').setLevel(logging.WARNING)
 
     def __filter_record(self, warc_record, article=None):
         """
