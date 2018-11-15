@@ -24,8 +24,8 @@ import subprocess
 import sys
 import time
 import urllib
-# import urllib.request
-# import urllib.parse
+import urllib.request
+import urllib.parse
 
 from ago import human
 from dateutil import parser
@@ -46,7 +46,7 @@ class CommonCrawl:
     # download dir for articles
     local_download_dir_article = './cc_download_articles/'
     # hosts (if None or empty list, any host is OK)
-    filter_valid_hosts = ['foxnews.com','cnn.com']  # example: ['elrancaguino.cl']
+    filter_valid_hosts = ['foxnews.com', 'cnn.com']  # example: ['elrancaguino.cl']
     # filter_valid_hosts = []
 
     # filter on a word
@@ -55,9 +55,9 @@ class CommonCrawl:
     wait = input("PRESS ENTER TO CONTINUE")
 
     # start date (if None, any date is OK as start date), as datetime
-    filter_start_date = datetime.datetime(2018, 10, 14)
+    filter_start_date = datetime.datetime(2018, 11, 1)
     # end date (if None, any date is OK as end date)
-    filter_end_date = datetime.datetime(2018, 10, 31)
+    filter_end_date = datetime.datetime(2018, 11, 2)
     # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
     filter_strict_date = False
     # if True, the script checks whether a file has been downloaded already and uses that file instead of downloading
@@ -91,11 +91,11 @@ class CommonCrawl:
         # wait = input("PRESS ENTER TO CONTINUE")
 
         # make loggers quite
-        logging.getLogger('requests').setLevel(logging.WARNING)
-        logging.getLogger('readability').setLevel(logging.WARNING)
-        logging.getLogger('PIL').setLevel(logging.WARNING)
-        logging.getLogger('newspaper').setLevel(logging.WARNING)
-        logging.getLogger('newsplease').setLevel(logging.WARNING)
+        # logging.getLogger('requests').setLevel(logging.WARNING)
+        # logging.getLogger('readability').setLevel(logging.WARNING)
+        # logging.getLogger('PIL').setLevel(logging.WARNING)
+        # logging.getLogger('newspaper').setLevel(logging.WARNING)
+        # logging.getLogger('newsplease').setLevel(logging.WARNING)
 
     def __filter_record(self, warc_record, article=None):
         """
@@ -197,11 +197,9 @@ class CommonCrawl:
         """
 
         cmd1 = "aws s3 ls --recursive s3://commoncrawl/crawl-data/CC-NEWS/ --no-sign-request > tmpaws.txt"
-        # ALSO, POWERSHELL CALL DOES NOT WORK IN IDE, Need to run from command line
-        # cmd2 = "Powershell -Command \"Get-Content tmpaws.txt | % { $_.Split(' ')[-1];}\""
         cmd2 = ["powershell.exe", "C:\\Users\\ralphd-laptop2\\PycharmProjects\\Crawl2\\getdata.ps1"]
         # use the below for Linux as it has awk
-        # cmd2 = "awk '{ print $4 }' tmpaws.txt && " \
+        # cmd2 = "awk '{ print $4 }' tmpaws.txt"
 
         self.logger.info('executing: %s', cmd1)
         subprocess.call(cmd1, shell=True)
