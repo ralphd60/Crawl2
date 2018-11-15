@@ -24,7 +24,8 @@ import subprocess
 import sys
 import time
 import urllib
-import urllib.request
+# import urllib.request
+# import urllib.parse
 
 from ago import human
 from dateutil import parser
@@ -41,11 +42,11 @@ __credits__ = ["Sebastian Nagel"]
 class CommonCrawl:
     # ########### YOUR CONFIG ############
     # download dir for warc files
-    local_download_dir_warc = './cc_download_warc/'
+    local_download_dir_warc = 'D:/Documents/Crawl_Data/cc_download_warc/'
     # download dir for articles
     local_download_dir_article = './cc_download_articles/'
     # hosts (if None or empty list, any host is OK)
-    filter_valid_hosts = ['foxbusiness.com', 'bloomberg.com', 'cnbc.com', 'cnn.com']  # example: ['elrancaguino.cl']
+    filter_valid_hosts = ['foxnews.com','cnn.com']  # example: ['elrancaguino.cl']
     # filter_valid_hosts = []
 
     # filter on a word
@@ -54,9 +55,9 @@ class CommonCrawl:
     wait = input("PRESS ENTER TO CONTINUE")
 
     # start date (if None, any date is OK as start date), as datetime
-    filter_start_date = datetime.datetime(2017, 8, 1)
+    filter_start_date = datetime.datetime(2018, 10, 14)
     # end date (if None, any date is OK as end date)
-    filter_end_date = datetime.datetime(2017, 8, 2)
+    filter_end_date = datetime.datetime(2018, 10, 31)
     # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
     filter_strict_date = False
     # if True, the script checks whether a file has been downloaded already and uses that file instead of downloading
@@ -71,7 +72,7 @@ class CommonCrawl:
     cc_news_crawl_names = None
 
     # logging
-    logging.basicConfig(filename='crawl.log', filemode='w', level=logging.DEBUG)
+    logging.basicConfig(filename='crawl.log', filemode='w', level=logging.WARNING)
     logger = logging.getLogger(__name__)
 
     def __setup__(self):
@@ -130,7 +131,7 @@ class CommonCrawl:
             if not article:
                 article = NewsPlease.from_warc(warc_record)
 
-            publishing_date = self.__get_publishing_date(warc_record, article)
+            publishing_date = self.__get_publishing_date(article)
 
             if not publishing_date:
                 if self.filter_strict_date:
@@ -144,7 +145,7 @@ class CommonCrawl:
                 if self.filter_end_date < publishing_date:
                         return False, article
 
-        get_desc_data = self.__get_description_data(warc_record, article)
+        get_desc_data = self.__get_description_data(article)
 
         if not get_desc_data:
             return False, article
@@ -153,10 +154,11 @@ class CommonCrawl:
                 return False, article
         return True, article
 
-    def __get_publishing_date(self, warc_record, article):
+    @staticmethod
+    def __get_publishing_date(article):
         """
         Extracts the publishing date from the record
-        :param warc_record:
+        :param article:
         :return:
         """
 
@@ -166,10 +168,11 @@ class CommonCrawl:
         else:
             return None
 
-    def __get_description_data(self, warc_record, article):
+    @staticmethod
+    def __get_description_data(article):
         """
         Extracts the description from the record
-        :param warc_record:
+        :param article:
         :return:
         """
         if article.description:
@@ -213,7 +216,8 @@ class CommonCrawl:
 
         return lines
 
-    def __on_download_progress_update(self, blocknum, blocksize, totalsize):
+    @staticmethod
+    def __on_download_progress_update(blocknum, blocksize, totalsize):
         """
         Prints some download progress information
         :param blocknum:
@@ -301,9 +305,9 @@ class CommonCrawl:
                             secs_per_article = elapsed_secs / counter_article_total
                             self.logger.info('statistics')
                             self.logger.warning('pass = %i, discard = %i, total = %i', counter_article_passed,
-                                counter_article_discarded, counter_article_total)
+                                                counter_article_discarded, counter_article_total)
                             self.logger.warning('extraction from current WARC file started %s; %f s/article',
-                                human(start_time), secs_per_article)
+                                                human(start_time), secs_per_article)
                 except:
                     if self.continue_after_error:
                         self.logger.error('Unexpected error: %s', sys.exc_info()[0])
@@ -332,30 +336,28 @@ class CommonCrawl:
             y = int(name[35:39])
             m = int(name[39:41])
             d = int(name[41:43])
-            file_date = datetime.datetime(y,m,d)
+            file_date = datetime.datetime(y, m, d)
             print(file_date)
 
             # filter_start_date = datetime.date(2016, 8, 26)
             print(self.filter_start_date)
 
-            if file_date == self.filter_start_date:
-                wait = input("PRESS ENTER TO CONTINUE going to next warc file")
+            if self.filter_start_date <= file_date <= self.filter_end_date:
                 download_url = self.__get_download_url(name)
                 local_path_name = self.__download(download_url)
                 self.__process_warc_gz_file(local_path_name)
 
-
-    def __get_pretty_filepath(self, path, article):
+    @staticmethod
+    def __get_pretty_filepath(path, article):
         """
         Pretty might be an euphemism, but this function tries to avoid too long filenames, while keeping some structure.
         :param path:
-        :param name:
+        :param article:
         :return:
         """
         short_filename = hashlib.sha256(article.filename.encode()).hexdigest()
         # the below works but need to shorten the description as the file name becoes to long
         # short_filename = article.description
-
 
         sub_dir = article.source_domain
 
@@ -375,7 +377,7 @@ class CommonCrawl:
 
         # do whatever you need to do with the article (e.g., save it to disk, store it in ElasticSearch, etc.)
         with open(self.__get_pretty_filepath(self.local_download_dir_article, article), 'w') as outfile:
-            #OLD CODE  json.dump(article, outfile, indent=4, sort_keys=True)
+            # OLD CODE  json.dump(article, outfile, indent=4, sort_keys=True)
             json.dump(article.__dict__, outfile, default=str, indent=4, sort_keys=True)
         # ...
 
