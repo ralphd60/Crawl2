@@ -42,15 +42,16 @@ __credits__ = ["Sebastian Nagel"]
 class CommonCrawl:
     # ########### YOUR CONFIG ############
     # download dir for warc files
+    home = '.'
     # Windows
     # local_download_dir_warc = 'D:/Documents/Crawl_Data/cc_download_warc/'
     # Linux
-    local_download_dir_warc = '/home/ralphd/Documents/Crawl_Data/cc_download_warc/'
+    local_download_dir_warc = home + '/Crawl_Data/cc_download_warc/'
     # download dir for articles
     # Windows
     # local_download_dir_article = './cc_download_articles/'
     # Linux
-    local_download_dir_article = '/home/ralphd/Documents/Crawl_Data/cc_download_articles/'
+    local_download_dir_article = home + '/Crawl_Data/cc_download_articles/'
     # hosts (if None or empty list, any host is OK)
     filter_valid_hosts = ['foxnews.com', 'cnn.com']  # example: ['elrancaguino.cl']
     # filter_valid_hosts = []
@@ -347,10 +348,11 @@ class CommonCrawl:
 
             self.logger.info(self.filter_start_date)
 
-            if self.filter_start_date <= file_date <= self.filter_end_date:
+            if self.filter_start_date <= file_date < self.filter_end_date:
                 download_url = self.__get_download_url(name)
                 local_path_name = self.__download(download_url)
                 self.__process_warc_gz_file(local_path_name)
+                os.remove(local_path_name)
 
     @staticmethod
     def __get_pretty_filepath(path, article):
