@@ -17,7 +17,7 @@ on_valid_article_extracted.
 """
 import datetime
 import hashlib
-import json
+# import json # if writing to a json file
 import logging
 import os
 import subprocess
@@ -26,7 +26,7 @@ import time
 import urllib
 import urllib.request
 import urllib.parse
-
+from json2html import * # if writing to a html file
 from ago import human
 from dateutil import parser
 from hurry.filesize import size
@@ -44,27 +44,37 @@ class CommonCrawl:
     # download dir for warc files
     home = '.'
     # Windows
-    # local_download_dir_warc = 'D:/Documents/Crawl_Data/cc_download_warc/'
+    # local_download_dir_warc = 'C:/Documents/Crawl_Data/cc_download_warc/'
+    # local_download_dir_article = 'C:/Documents/Crawl_Data/cc_download_articles/'
     # Linux
     local_download_dir_warc = home + '/Crawl_Data/cc_download_warc/'
-    # download dir for articles
-    # Windows
-    # local_download_dir_article = './cc_download_articles/'
-    # Linux
     local_download_dir_article = home + '/Crawl_Data/cc_download_articles/'
+
     # hosts (if None or empty list, any host is OK)
-    filter_valid_hosts = ['foxnews.com', 'cnn.com']  # example: ['elrancaguino.cl']
+    filter_valid_hosts = ['www.foxnews.com', 'www.cnn.com']  # example: ['elrancaguino.cl']
     # filter_valid_hosts = []
 
     # filter on a word
-    filter_text = input('Search keyword:  ')
+    filter_text = input('Search keyword: ')
     print(filter_text)
-    wait = input("PRESS ENTER TO CONTINUE")
+
+    start_date = input('Enter start period (yyyymmdd): ')
+    start_year = int(start_date[0:4])
+    start_month = int(start_date[4:6])
+    start_day = int(start_date[6:])
+
+    end_date = input('Enter end - not inclusive - period (yyyymmdd): ')
+    end_year = int(end_date[0:4])
+    end_month = int(end_date[4:6])
+    end_day = int(end_date[6:])
 
     # start date (if None, any date is OK as start date), as datetime
-    filter_start_date = datetime.datetime(2018, 11, 1)
+    filter_start_date = datetime.datetime(start_year, start_month, start_day)
     # end date (if None, any date is OK as end date)
-    filter_end_date = datetime.datetime(2018, 11, 2)
+    filter_end_date = datetime.datetime(end_year, end_month, end_day)
+    print(filter_start_date)
+    print(filter_end_date)
+    wait = input("PRESS ENTER TO CONTINUE")
     # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
     filter_strict_date = False
     # if True, the script checks whether a file has been downloaded already and uses that file instead of downloading
@@ -204,8 +214,7 @@ class CommonCrawl:
         """
 
         cmd1 = "aws s3 ls --recursive s3://commoncrawl/crawl-data/CC-NEWS/ --no-sign-request > tmpaws.txt"
-        # ALSO, POWERSHELL CALL DOES NOT WORK IN IDE, Need to run from command line
-        # cmd2 = "Powershell -Command \"Get-Content tmpaws.txt | % { $_.Split(' ')[-1];}\""
+        # windows command
         # cmd2 = ["powershell.exe", "C:\\Users\\ralphd-laptop2\\PycharmProjects\\Crawl2\\getdata.ps1"]
         # use the below for Linux as it has awk
         cmd2 = "awk '{ print $4 }' tmpaws.txt"
@@ -352,7 +361,8 @@ class CommonCrawl:
                 download_url = self.__get_download_url(name)
                 local_path_name = self.__download(download_url)
                 self.__process_warc_gz_file(local_path_name)
-                os.remove(local_path_name)
+                # comment out for local version - in order to have a local file avaialble
+                # os.remove(local_path_name)
 
     @staticmethod
     def __get_pretty_filepath(path, article):
@@ -372,7 +382,8 @@ class CommonCrawl:
 
         if not os.path.exists(final_path):
             os.makedirs(final_path)
-        return final_path + short_filename + '.json'
+        return final_path + short_filename + '.html'
+        # return final_path + short_filename + '.json'
 
     def on_valid_article_extracted(self, article):
         """
@@ -384,9 +395,9 @@ class CommonCrawl:
 
         # do whatever you need to do with the article (e.g., save it to disk, store it in ElasticSearch, etc.)
         with open(self.__get_pretty_filepath(self.local_download_dir_article, article), 'w') as outfile:
-            # OLD CODE  json.dump(article, outfile, indent=4, sort_keys=True)
-            json.dump(article.__dict__, outfile, default=str, indent=4, sort_keys=True)
-        # ...
+            # json file or html table
+            # json.dump(article.__dict__, outfile, default=str, indent=4, sort_keys=False)
+            outfile.write(json2html.convert(json=article.__dict__))
 
         return
 
