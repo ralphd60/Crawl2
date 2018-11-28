@@ -39,58 +39,58 @@ __copyright__ = "Copyright 2017"
 __credits__ = ["Sebastian Nagel"]
 
 
-class CommonCrawl:
+class CommonCrawl():
     # ########### YOUR CONFIG ############
     # download dir for warc files
-    home = '.'
-    # Windows
-    # local_download_dir_warc = 'C:/Documents/Crawl_Data/cc_download_warc/'
-    # local_download_dir_article = 'C:/Documents/Crawl_Data/cc_download_articles/'
-    # Linux
-    local_download_dir_warc = home + '/Crawl_Data/cc_download_warc/'
-    local_download_dir_article = home + '/Crawl_Data/cc_download_articles/'
+    def __init__(self, start_date, end_date, search_text):
+        home = '.'
+        self.filter_text = search_text
 
-    # hosts (if None or empty list, any host is OK)
-    filter_valid_hosts = ['www.foxnews.com', 'www.cnn.com']  # example: ['elrancaguino.cl']
-    # filter_valid_hosts = []
+        self.local_download_dir_warc = home + '/Crawl_Data/cc_download_warc/'
+        self.local_download_dir_article = home + '/Crawl_Data/cc_download_articles/'
 
-    # filter on a word
-    filter_text = input('Search keyword: ')
-    print(filter_text)
+        # hosts (if None or empty list, any host is OK)
+        self.filter_valid_hosts = ['www.foxnews.com', 'www.cnn.com']  # example: ['elrancaguino.cl']
+        # filter_valid_hosts = []
 
-    start_date = input('Enter start period (yyyymmdd): ')
-    start_year = int(start_date[0:4])
-    start_month = int(start_date[4:6])
-    start_day = int(start_date[6:])
+        # filter on a word
+        # self.filter_text = input('Search keyword: ')
+        print(self.filter_text)
 
-    end_date = input('Enter end - not inclusive - period (yyyymmdd): ')
-    end_year = int(end_date[0:4])
-    end_month = int(end_date[4:6])
-    end_day = int(end_date[6:])
+        # start_date = input('Enter start period (yyyymmdd): ')
+        start_year = int(start_date[0:4])
+        start_month = int(start_date[4:6])
+        start_day = int(start_date[6:])
 
-    # start date (if None, any date is OK as start date), as datetime
-    filter_start_date = datetime.datetime(start_year, start_month, start_day)
-    # end date (if None, any date is OK as end date)
-    filter_end_date = datetime.datetime(end_year, end_month, end_day)
-    print(filter_start_date)
-    print(filter_end_date)
-    wait = input("PRESS ENTER TO CONTINUE")
-    # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
-    filter_strict_date = False
-    # if True, the script checks whether a file has been downloaded already and uses that file instead of downloading
-    # again. Note that there is no check whether the file has been downloaded completely or is valid!
-    reuse_previously_downloaded_files = True
-    # continue after error
-    continue_after_error = False
-    # ########### END YOUR CONFIG #########
+        # end_date = input('Enter end - not inclusive - period (yyyymmdd): ')
+        end_year = int(end_date[0:4])
+        end_month = int(end_date[4:6])
+        end_day = int(end_date[6:])
 
-    # commoncrawl.org
-    cc_base_url = 'https://commoncrawl.s3.amazonaws.com/'
-    cc_news_crawl_names = None
+        # start date (if None, any date is OK as start date), as datetime
+        self.filter_start_date = datetime.datetime(start_year, start_month, start_day)
+        # end date (if None, any date is OK as end date)
+        self.filter_end_date = datetime.datetime(end_year, end_month, end_day)
+        print(self.filter_start_date)
+        print(self.filter_end_date)
+        # wait = input("PRESS ENTER TO CONTINUE")
+        # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
+        self.filter_strict_date = False
+        # if True, the script checks whether a file has been downloaded already and uses that file instead of
+        # downloading
+        # again. Note that there is no check whether the file has been downloaded completely or is valid!
+        self.reuse_previously_downloaded_files = True
+        # continue after error
+        continue_after_error = False
+        # ########### END YOUR CONFIG #########
 
-    # logging
-    logging.basicConfig(filename='crawl.log', filemode='w', level=logging.ERROR)
-    logger = logging.getLogger(__name__)
+        # commoncrawl.org
+        self.cc_base_url = 'https://commoncrawl.s3.amazonaws.com/'
+        self.cc_news_crawl_names = None
+
+        # logging
+        logging.basicConfig(filename='crawl.log', filemode='w', level=logging.ERROR)
+        self.logger = logging.getLogger(__name__)
 
     def __setup__(self):
         """
@@ -214,10 +214,12 @@ class CommonCrawl:
         """
 
         cmd1 = "aws s3 ls --recursive s3://commoncrawl/crawl-data/CC-NEWS/ --no-sign-request > tmpaws.txt"
-        # windows command
-        # cmd2 = ["powershell.exe", "C:\\Users\\ralphd-laptop2\\PycharmProjects\\Crawl2\\getdata.ps1"]
-        # use the below for Linux as it has awk
-        cmd2 = "awk '{ print $4 }' tmpaws.txt"
+        if sys.platform == 'linux':
+            cmd2 = "awk '{ print $4 }' tmpaws.txt"
+            # windows command
+        else:
+            cmd2 = ["powershell.exe", "C:\\Users\\ralphd-laptop2\\PycharmProjects\\Crawl2\\getdata.ps1"]
+            # use the below for Linux as it has awk
 
         self.logger.info('executing: %s', cmd1)
         subprocess.call(cmd1, shell=True)
@@ -232,7 +234,6 @@ class CommonCrawl:
 
         return lines
 
-    @staticmethod
     def __on_download_progress_update(blocknum, blocksize, totalsize):
         """
         Prints some download progress information
@@ -266,7 +267,8 @@ class CommonCrawl:
             return local_filepath
         else:
             self.logger.info('downloading %s, local: %s', url, local_filepath)
-            urllib.request.urlretrieve(url, local_filepath, reporthook=self.__on_download_progress_update)
+            # urllib.request.urlretrieve(url, local_filepath, reporthook=self.__on_download_progress_update)
+            urllib.request.urlretrieve(url, local_filepath)
             self.logger.info('download completed, local file: %s', local_filepath)
             return local_filepath
 
@@ -362,7 +364,7 @@ class CommonCrawl:
                 local_path_name = self.__download(download_url)
                 self.__process_warc_gz_file(local_path_name)
                 # comment out for local version - in order to have a local file avaialble
-                # os.remove(local_path_name)
+                os.remove(local_path_name)
 
     @staticmethod
     def __get_pretty_filepath(path, article):
@@ -403,7 +405,10 @@ class CommonCrawl:
 
 
 if __name__ == '__main__':
-    # here we are creating the object (https://commoncrawl.org)
-    common_crawl = CommonCrawl()
+    """This is a standard Python
+    trick to see if you are running the file as a stand alone script, or
+    if it was imported as a module"""
+    # sys.argv includes the program nam at [0]
+    common_crawl = CommonCrawl(sys.argv[1],sys.argv[2], sys.argv[3])
     # here is where we run the function 'run' which starts the program
     common_crawl.run()
