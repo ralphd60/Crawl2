@@ -50,8 +50,8 @@ class CommonCrawl():
         self.local_download_dir_article = home + '/Crawl_Data/cc_download_articles/'
 
         # hosts (if None or empty list, any host is OK)
-        self.filter_valid_hosts = ['www.foxnews.com', 'www.cnn.com']  # example: ['elrancaguino.cl']
-        # filter_valid_hosts = []
+        self.filter_valid_hosts = [ 'www.cnn.com', 'www.foxnews.com']
+        # self.filter_valid_hosts = []
 
         # filter on a word
         # self.filter_text = input('Search keyword: ')
@@ -89,7 +89,7 @@ class CommonCrawl():
         self.cc_news_crawl_names = None
 
         # logging
-        logging.basicConfig(filename='crawl.log', filemode='w', level=logging.ERROR)
+        logging.basicConfig(filename='crawl.log', filemode='w', level=logging.WARNING)
         self.logger = logging.getLogger(__name__)
 
     def __setup__(self):
@@ -234,7 +234,7 @@ class CommonCrawl():
 
         return lines
 
-    def __on_download_progress_update(blocknum, blocksize, totalsize):
+    def __on_download_progress_update(self, blocknum, blocksize, totalsize):
         """
         Prints some download progress information
         :param blocknum:
@@ -267,6 +267,7 @@ class CommonCrawl():
             return local_filepath
         else:
             self.logger.info('downloading %s, local: %s', url, local_filepath)
+            # comment out below line to avoid large nohup log file when running in background
             # urllib.request.urlretrieve(url, local_filepath, reporthook=self.__on_download_progress_update)
             urllib.request.urlretrieve(url, local_filepath)
             self.logger.info('download completed, local file: %s', local_filepath)
