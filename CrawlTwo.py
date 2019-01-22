@@ -60,12 +60,12 @@ class CommonCrawl():
         # start_date = input('Enter start period (yyyymmdd): ')
         start_year = int(start_date[0:4])
         start_month = int(start_date[4:6])
-        start_day = int(start_date[6:])
+        start_day = int(start_date[6:8])
 
         # end_date = input('Enter end - not inclusive - period (yyyymmdd): ')
         end_year = int(end_date[0:4])
         end_month = int(end_date[4:6])
-        end_day = int(end_date[6:])
+        end_day = int(end_date[6:8])
 
         # start date (if None, any date is OK as start date), as datetime
         self.filter_start_date = datetime.datetime(start_year, start_month, start_day)
@@ -73,7 +73,7 @@ class CommonCrawl():
         self.filter_end_date = datetime.datetime(end_year, end_month, end_day)
         print(self.filter_start_date)
         print(self.filter_end_date)
-        # wait = input("PRESS ENTER TO CONTINUE")
+
         # if date filtering is string, e.g., if we could not detect the date of an article, we will discard the article
         self.filter_strict_date = False
         # if True, the script checks whether a file has been downloaded already and uses that file instead of
@@ -410,6 +410,7 @@ if __name__ == '__main__':
     trick to see if you are running the file as a stand alone script, or
     if it was imported as a module"""
     # sys.argv includes the program nam at [0]
+    # sys.argv 1-3, start_date, end_date, search_text (eg) python3 ./CrawlTwo.py 20190120, 20190121, 'Donald Trump'
     common_crawl = CommonCrawl(sys.argv[1],sys.argv[2], sys.argv[3])
     # here is where we run the function 'run' which starts the program
     common_crawl.run()
